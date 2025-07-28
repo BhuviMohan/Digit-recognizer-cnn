@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Digit Recognizer</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9f9f9;
+      color: #333;
+      text-align: center;
+      padding: 2rem;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    h1 { color: #2c3e50; }
+    .upload-area {
+      border: 2px dashed #aaa;
+      padding: 40px;
+      margin: 20px auto;
+      width: 300px;
+      border-radius: 10px;
+      background-color: #fff;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .upload-area.dragover { background-color: #e1f5fe; }
+    #fileInput { display: none; }
+    .filename { margin-top: 10px; font-weight: bold; color: #555; }
+    .predict-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #3498db;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .predict-btn:hover { background-color: #2980b9; }
+    .result {
+      margin-top: 20px;
+      font-size: 1.2em;
+      color: #2e7d32;
+    }
+    .uploaded-image {
+      margin-top: 20px;
+      max-width: 150px;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+    }
+    .theme-switcher {
+      position: fixed; top: 20px; right: 20px;
+      background-color: #3498db; color: #fff;
+      border: none; padding: 8px 12px; border-radius: 5px;
+      cursor: pointer; transition: background-color 0.3s;
+    }
+    .theme-switcher:hover { background-color: #2980b9; }
+    body.dark-mode { background-color: #222; color: #ddd; }
+    body.dark-mode h1 { color: #fff; }
+    body.dark-mode .upload-area { background-color: #333; border-color: #555; }
+    body.dark-mode .filename { color: #ccc; }
+    body.dark-mode .predict-btn { background-color: #9b59b6; }
+    body.dark-mode .predict-btn:hover { background-color: #8e44ad; }
+    body.dark-mode .result { color: #27ae60; }
+    body.dark-mode .uploaded-image { border-color: #555; }
+  </style>
+</head>
+<body>
+  <!-- Theme Switcher Button -->
+  <button class="theme-switcher" onclick="toggleTheme()">Switch Theme</button>
+  <h1>🔢 Digit Recognizer</h1>
+
+  <!-- Upload Form -->
+  <form id="uploadForm" method="POST" action="/predict" enctype="multipart/form-data">
+    <div class="upload-area" id="drop-area">
+      <p>Drag & Drop your digit image here<br>or click to browse</p>
+      <input type="file" name="file" id="fileInput" accept="image/*" required />
+      <div class="filename" id="fileName"></div>
+    </div>
+    <button type="submit" class="predict-btn">Predict Digit</button>
+  </form>
+
+  <!-- Drawing Canvas -->
+  <div style="margin:40px auto; max-width:340px;">
+    <h3>Or Draw a Digit Below</h3>
+    <canvas id="canvas" width="280" height="280" style="border:2px solid #aaa; background:#fff; border-radius:10px;cursor:crosshair"></canvas>
+    <br/>
+    <button id="clear-btn" class="predict-btn" style="background:#888;margin-top:10px;">Clear</button>
+    <button id="predict-canvas-btn" class="predict-btn">Predict Drawn Digit</button>
+  </div>
+
+  <!-- File Upload Result -->
+  <div id="upload-result" style="display: {% if prediction and not from_canvas %}block{% else %}none{% endif %};">
+    <div class="result">{{ prediction }}</div>
+    <img src="{{ image_path }}" alt="Uploaded Image" class="uploaded-image" />
+    <p style="font-weight: bold;">{{ confidence }}</p>
+  </div>
+
+  <!-- Canvas Result (will display only once, no image) -->
+  <div id="canvas-result" style="display: {% if from_canvas %}block{% else %}none{% endif %};"></div>
+
+  <script>
+    const dropArea = document.getElementById('drop-area');
+    const fileInput = document.getElementById('fileInput');
+    const fileName = document.getElementById('fileName');
+    // Theme logic
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark') document.body.classList.add('dark-mode');
+    });
+    function toggleTheme() {
+      document.body.classList.toggle('dark-mode');
+      const isDark = document.body.classList.contains('dark-mode');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    }
+    // Click to browse
+    dropArea.addEventListener('click', () => fileInput.click());
+    // Drag and drop
+    dropArea.addEventListener('dragover', (e) => { e.preventDefault(); dropArea.classList.add('dragover'); });
+    dropArea.addEventListener('dragleave', () => { dropArea.classList.remove('dragover'); });
+    dropArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropArea.classList.remove('dragover');
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        fileInput.files = files;
+        fileName.textContent = files[0].name;
+      }
+    });
+    // Display selected file name
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        fileName.textContent = fileInput.files[0].name;
+      }
+    });
+
+    // Canvas logic
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    let painting = false;
+    canvas.addEventListener('mousedown', function(e) { painting = true; });
+    canvas.addEventListener('mouseup', function(e) { painting = false; ctx.beginPath(); });
+    canvas.addEventListener('mouseleave', function(e) { painting = false; ctx.beginPath(); });
+    canvas.addEventListener('mousemove', draw);
+    function draw(e) {
+      if (!painting) return;
+      const rect = canvas.getBoundingClientRect();
+      ctx.lineWidth = 18;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = "#111";
+      ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    }
+    // Clear canvas and Result
+    document.getElementById('clear-btn').addEventListener('click', function(e) {
+      e.preventDefault();
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      clearCanvasResult();
+    });
+
+    // Helper functions to clear upload/canvas results
+    function clearUploadResult() {
+      document.getElementById('upload-result').style.display = 'none';
+    }
+    function clearCanvasResult() {
+      const cResult = document.getElementById('canvas-result');
+      if (cResult) {
+        cResult.style.display = 'none';
+        cResult.innerHTML = "";
+      }
+    }
+    // When file is selected, clear canvas result
+    fileInput.addEventListener('change', () => { clearCanvasResult(); });
+    // When drawing is submitted, clear upload result and show only ONE result block (no image)
+    document.getElementById('predict-canvas-btn').addEventListener('click', function(e) {
+      e.preventDefault();
+      clearUploadResult();
+      const dataURL = canvas.toDataURL('image/png');
+      fetch('/predict_canvas', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ image: dataURL })
+      })
+      .then(response => response.json())
+      .then(data => {
+        let cResult = document.getElementById('canvas-result');
+        cResult.style.display = 'block';
+        // No image, only prediction text and confidence
+        cResult.innerHTML = `<div class="result">${data.prediction}</div><p style="font-weight:bold;">${data.confidence}</p>`;
+      });
+    });
+  </script>
+</body>
+</html>
