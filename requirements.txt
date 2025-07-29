@@ -5,4 +5,4 @@ pillow==10.3.0
 opencv-python==4.10.0.82
 matplotlib==3.8.4
 werkzeug==2.3.7
-gunicorn==21.2.0
+gunicorn==21.2.0  # Only needed for Heroku
