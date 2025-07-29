@@ -1,0 +1,59 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Model and weight files
+*.h5
+*.hdf5
+*.keras
+*.ckpt
+*.pb
+*.tflite
+*.onnx
+model/
+
+# Virtual environment
+env/
+venv/
+ENV/
+.venv/
+.env/
+
+# Uploaded or temporary user files
+static/uploads/
+uploads/
+temp/
+*.tmp
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Log files
+*.log
+
+# IDE & editor specific
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Mac OS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Python package manager files
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Compiled C files
+*.so
+
+# Render or deployment secrets (optional)
+*.env
+secrets.env
+config.json
