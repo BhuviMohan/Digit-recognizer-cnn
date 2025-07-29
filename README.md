@@ -1,67 +1,79 @@
 Digit Recognizer Web App
+
 A simple web application that recognizes handwritten digits using a trained machine learning model.
 
 Features
+
 Draw digits on a canvas and let the model predict the number.
-User-friendly web interface for live digit recognition.
-Fast and accurate predictions powered by machine learning.
+
+User-friendly interface for live digit recognition.
+
+Fast and accurate predictions powered by a Convolutional Neural Network (CNN).
+
 Easily extensible for further improvements or educational use.
 
 Getting Started
+
 Prerequisites
 Python 3.x
-Required libraries (see Installation)
+
+All required libraries listed in requirements.txt
 
 Installation
-Clone the repository
+
+Clone the Repository
 
 bash
 git clone https://github.com/BhuviMohan/Digit-recognizer-cnn.git
-cd digit-recognizer-cnn
-(Backend) Install Python dependencies
+cd Digit-recognizer-cnn
+Backend Setup
 
 bash
 pip install -r requirements.txt
-(Frontend) Install frontend dependencies (if any)
+Frontend Setup (if applicable)
 
 bash
 cd frontend
 npm install
 npm run build
-Run the app
+Running the App
+To start the application:
 
 bash
 python app.py
-Or, according to your framework’s requirements.
-
-Open your browser and visit: http://localhost:5000
+Then, open your browser and visit: http://localhost:5000
 
 Usage
-Draw a digit (0-9) on the canvas.
 
-Click "Predict" to see the model's prediction.
+Draw a digit (0–9) on the canvas.
 
-(Optional) Save screenshots or model outputs.
+Click Predict to view the model's prediction.
 
 Project Structure
 text
 .
 ├── app.py               # Main backend server
 ├── model/               # Trained models and related files
-├── static/              # Static assets (HTML, CSS, JS)
+├── static/              # Static assets (CSS, JS, Images)
 ├── templates/           # HTML templates
 ├── requirements.txt     # Python dependencies
-└── README.md            # This file
+└── README.md            # Project documentation
+
 Model
-Trained on the MNIST dataset or similar for handwritten digit recognition.
+
+The model is trained on the MNIST dataset to recognize handwritten digits (0–9) using a Convolutional Neural Network (CNN).
 
 Contributing
-Contributions are welcome! Please open issues or submit pull requests for improvements and bug fixes.
+
+Contributions are welcome!
+If you find any issues or have suggestions for improvement, feel free to open an issue or submit a pull request.
 
 License
-This project is licensed under the MIT License. See the LICENSE file for details.
+
+This project is licensed under the MIT License.
+See the LICENSE file for more information.
 
 Acknowledgments
-MNIST Dataset
 
-Any libraries or frameworks used
+MNIST Dataset
+Libraries and frameworks used: TensorFlow/Keras, Flask, NumPy, OpenCV, and others.
